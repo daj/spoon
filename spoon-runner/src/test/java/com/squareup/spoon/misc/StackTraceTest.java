@@ -133,6 +133,157 @@ public class StackTraceTest {
     assertThat(inner.getElements()).hasSize(2);
   }
 
+  @Test public void nestedCustomException() {
+    String exception = ""
+            + "java.lang.NullPointerException: Hello to the world.\n"
+            + "at com.example.spoon.ordering.tests.MiscellaneousTest.test(MiscellaneousTest.java:11)\n"
+            + "Caused by: java.lang.AssertionError: Expected:=============\n"
+            + "=======================================\n"
+            + "\n"
+            + "<4>\n"
+            + "but was:\n"
+            + "<8>\n"
+            + "at com.example.spoon.ordering.tests.Other.otherTest(Other.java:12)\n"
+            + "at com.example.spoon.ordering.tests.Other.things(Other.java:22)";
+
+    StackTrace actual = StackTrace.from(exception);
+    assertThat(actual.getClassName()).isEqualTo("java.lang.NullPointerException");
+    assertThat(actual.getMessage()).isEqualTo("Hello to the world.");
+    assertThat(actual.getCause()).isNotNull();
+    assertThat(actual.getElements()).hasSize(1);
+
+    StackTrace inner = actual.getCause();
+    assertThat(inner.getClassName()).isEqualTo("java.lang.AssertionError");
+    assertThat(inner.getMessage()).isEqualTo("Expected:=============\n"
+            + "=======================================\n"
+            + "\n"
+            + "<4>\n"
+            + "but was:\n"
+            + "<8>");
+    assertThat(inner.getCause()).isNull();
+    assertThat(inner.getElements()).hasSize(2);
+  }
+
+  @Test public void nestedCustomExceptionLarge() {
+    String exception = "" +
+            "junit.framework.AssertionFailedError:\n";
+
+    String message =
+        "        **** 2 Assertion Errors Found ****\n" +
+        "\n" +
+        "        --------- Failed Assertion # 1 --------\n" +
+        "junit.framework.AssertionFailedError: 1st expected failure\n" +
+        "at junit.framework.Assert.fail(Assert.java:50)\n" +
+        "at junit.framework.Assert.assertTrue(Assert.java:20)\n" +
+        "at com.capitalone.mobile.wallet.testing.AssertionErrorCollector.assertTrue(AssertionErrorCollector.java:34)\n" +
+        "at integration_tests.BaseIntegrationTest.checkTrue(BaseIntegrationTest.java:659)\n" +
+        "at integration_tests.MultipleAssertionsTest.testMultipleFailedAssertions(MultipleAssertionsTest.java:9)\n" +
+        "at java.lang.reflect.Method.invoke(Native Method)\n" +
+        "at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)\n" +
+        "at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n" +
+        "at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)\n" +
+        "at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n" +
+        "at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)\n" +
+        "at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)\n" +
+        "at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)\n" +
+        "at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)\n" +
+        "at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)\n" +
+        "at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)\n" +
+        "at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)\n" +
+        "at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)\n" +
+        "at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)\n" +
+        "at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)\n" +
+        "at org.junit.runners.ParentRunner.run(ParentRunner.java:363)\n" +
+        "at org.junit.runners.Suite.runChild(Suite.java:128)\n" +
+        "at org.junit.runners.Suite.runChild(Suite.java:27)\n" +
+        "at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)\n" +
+        "at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)\n" +
+        "at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)\n" +
+        "at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)\n" +
+        "at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)\n" +
+        "at org.junit.runners.ParentRunner.run(ParentRunner.java:363)\n" +
+        "at org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n" +
+        "at org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n" +
+        "at android.support.test.internal.runner.TestExecutor.execute(TestExecutor.java:54)\n" +
+        "at android.support.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:240)\n" +
+        "at android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:1879)\n" +
+        "\n" +
+        "        --------- Failed Assertion # 2 --------\n" +
+        "junit.framework.AssertionFailedError: 2nd expected failure\n" +
+        "at junit.framework.Assert.fail(Assert.java:50)\n" +
+        "at junit.framework.Assert.assertTrue(Assert.java:20)\n" +
+        "at com.capitalone.mobile.wallet.testing.AssertionErrorCollector.assertTrue(AssertionErrorCollector.java:34)\n" +
+        "at integration_tests.BaseIntegrationTest.checkTrue(BaseIntegrationTest.java:659)\n" +
+        "at integration_tests.MultipleAssertionsTest.testMultipleFailedAssertions(MultipleAssertionsTest.java:10)\n" +
+        "at java.lang.reflect.Method.invoke(Native Method)\n" +
+        "at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)\n" +
+        "at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n" +
+        "at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)\n" +
+        "at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n" +
+        "at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)\n" +
+        "at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)\n" +
+        "at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)\n" +
+        "at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)\n" +
+        "at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)\n" +
+        "at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)\n" +
+        "at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)\n" +
+        "at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)\n" +
+        "at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)\n" +
+        "at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)\n" +
+        "at org.junit.runners.ParentRunner.run(ParentRunner.java:363)\n" +
+        "at org.junit.runners.Suite.runChild(Suite.java:128)\n" +
+        "at org.junit.runners.Suite.runChild(Suite.java:27)\n" +
+        "at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)\n" +
+        "at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)\n" +
+        "at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)\n" +
+        "at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)\n" +
+        "at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)\n" +
+        "at org.junit.runners.ParentRunner.run(ParentRunner.java:363)\n" +
+        "at org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n" +
+        "at org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n" +
+        "at android.support.test.internal.runner.TestExecutor.execute(TestExecutor.java:54)\n" +
+        "at android.support.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:240)\n" +
+        "at android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:1879)\n" +
+        "\n" +
+        "        ----------------------------------\n" +
+        "at junit.framework.Assert.fail(Assert.java:50)\n" +
+        "at junit.framework.Assert.assertTrue(Assert.java:20)\n" +
+        "at junit.framework.Assert.assertFalse(Assert.java:34)\n" +
+        "at integration_tests.BaseIntegrationTest.tearDown(BaseIntegrationTest.java:164)\n" +
+        "at java.lang.reflect.Method.invoke(Native Method)\n" +
+        "at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)\n" +
+        "at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n" +
+        "at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)\n" +
+        "at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:33)\n" +
+        "at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)\n" +
+        "at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)\n" +
+        "at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)\n" +
+        "at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)\n" +
+        "at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)\n" +
+        "at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)\n" +
+        "at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)\n" +
+        "at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)\n" +
+        "at org.junit.runners.ParentRunner.run(ParentRunner.java:363)\n" +
+        "at org.junit.runners.Suite.runChild(Suite.java:128)\n" +
+        "at org.junit.runners.Suite.runChild(Suite.java:27)\n" +
+        "at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)\n" +
+        "at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)\n" +
+        "at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)\n" +
+        "at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)\n" +
+        "at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)\n" +
+        "at org.junit.runners.ParentRunner.run(ParentRunner.java:363)\n" +
+        "at org.junit.runner.JUnitCore.run(JUnitCore.java:137)\n" +
+        "at org.junit.runner.JUnitCore.run(JUnitCore.java:115)\n" +
+        "at android.support.test.internal.runner.TestExecutor.execute(TestExecutor.java:54)\n" +
+        "at android.support.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:240)\n" +
+        "at android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:1879)";
+
+    StackTrace actual = StackTrace.from(exception + message);
+    assertThat(actual.getClassName()).isEqualTo("junit.framework.AssertionFailedError");
+    assertThat(actual.getMessage()).isEqualTo(message);
+    assertThat(actual.getCause()).isNull();
+  }
+
   @Test public void nestedExceptionWithMore() {
     String exception = ""
         + "java.lang.NullPointerException: Hello to the world.\n"
