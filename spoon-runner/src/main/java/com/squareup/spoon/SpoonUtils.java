@@ -27,7 +27,7 @@ import static com.android.ddmlib.FileListingService.FileEntry;
 import static com.android.ddmlib.FileListingService.TYPE_DIRECTORY;
 
 /** Utilities for executing instrumentation tests on devices. */
-final class SpoonUtils {
+public final class SpoonUtils {
   private static final Pattern SERIAL_VALIDATION = Pattern.compile("[^a-zA-Z0-9_-]");
   static final Gson GSON = new GsonBuilder() //
       .registerTypeAdapter(File.class, new TypeAdapter<File>() {
@@ -88,20 +88,39 @@ final class SpoonUtils {
   }
 
   /** Find all device serials that are plugged in through ADB. */
-  static Set<String> findAllDevices(AndroidDebugBridge adb) {
+  public static Set<String> findAllDevices(AndroidDebugBridge adb) {
+    return findAllDevices(adb, null);
+  }
+
+  /**
+   * Find all device serials that are plugged in through ADB.
+   *
+   * @param minApiLevel If <code>null</code>, all devices will be returned. Otherwise, only
+   *                      those device serials that are greater than or equal to the provided
+   *                      version will be returned.
+   */
+  public static Set<String> findAllDevices(AndroidDebugBridge adb, Integer minApiLevel) {
     Set<String> devices = new LinkedHashSet<String>();
     for (IDevice realDevice : adb.getDevices()) {
-      devices.add(realDevice.getSerialNumber());
+      if (minApiLevel == null) {
+        devices.add(realDevice.getSerialNumber());
+      } else {
+        DeviceDetails deviceDetails = DeviceDetails.createForDevice(realDevice);
+        int apiLevel = deviceDetails.getApiLevel();
+        if (apiLevel == DeviceDetails.UNKNOWN_API_LEVEL || apiLevel >= minApiLevel) {
+          devices.add(realDevice.getSerialNumber());
+        }
+      }
     }
     return devices;
   }
 
   /** Get an {@link com.android.ddmlib.AndroidDebugBridge} instance given an SDK path. */
-  static AndroidDebugBridge initAdb(File sdk) {
+  public static AndroidDebugBridge initAdb(File sdk, long timeOutMs) {
     AndroidDebugBridge.initIfNeeded(false);
     File adbPath = FileUtils.getFile(sdk, "platform-tools", "adb");
     AndroidDebugBridge adb = AndroidDebugBridge.createBridge(adbPath.getAbsolutePath(), false);
-    waitForAdb(adb);
+    waitForAdb(adb, timeOutMs);
     return adb;
   }
 
@@ -129,8 +148,7 @@ final class SpoonUtils {
     encoder.finish();
   }
 
-  private static void waitForAdb(AndroidDebugBridge adb) {
-    long timeOutMs = TimeUnit.SECONDS.toMillis(30);
+  private static void waitForAdb(AndroidDebugBridge adb, long timeOutMs) {
     long sleepTimeMs = TimeUnit.SECONDS.toMillis(1);
     while (!adb.hasInitialDeviceList() && timeOutMs > 0) {
       try {

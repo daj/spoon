@@ -38,8 +38,9 @@ output. This allows for visual inspection of test executions across different
 devices.
 
 Taking screenshots requires that you include the `spoon-client` JAR in your
-instrumentation app. In your tests call the `screenshot` method with a
-human-readable tag.
+instrumentation app. For Spoon to save screenshots your app must have the
+`WRITE_EXTERNAL_STORAGE` permission. In your tests call the `screenshot`
+method with a human-readable tag.
 
 ```java
 Spoon.screenshot(activity, "initial_state");
@@ -57,6 +58,26 @@ sequence of interaction.
 
 
 
+Files
+-----
+If you have files that will help you in debugging or auditing a test run, for example a log file or a SQLite database
+you can save these files easily and have them attached to your test report.
+This will let you easily drill down any issues that occurred in your test run.
+
+Attaching files to your report requires that you include the `spoon-client` jar and that you have `WRITE_EXTERNAL_STORAGE`
+permission.
+
+```java
+// by absolute path string
+Spoon.save(context, "/data/data/com.yourapp/your.file");
+// or with File
+Spoon.save(context, new File(context.getCacheDir(), "my-database.db"));
+```
+
+![Device Results with files](website/static/example_files.png)
+
+You download the files by clicking on the filename in the device report.
+
 Download
 --------
 
@@ -67,7 +88,7 @@ Maven:
 <dependency>
   <groupId>com.squareup.spoon</groupId>
   <artifactId>spoon-client</artifactId>
-  <version>1.1.9</version>
+  <version>1.3.1</version>
 </dependency>
 ```
 
@@ -87,7 +108,7 @@ You can run Spoon as a standalone tool with your application and instrumentation
 APKs.
 
 ```
-java -jar spoon-runner-1.1.9-jar-with-dependencies.jar \
+java -jar spoon-runner-1.3.1-jar-with-dependencies.jar \
     --apk ExampleApp-debug.apk \
     --test-apk ExampleApp-debug-androidTest-unaligned.apk
 ```
@@ -109,8 +130,12 @@ Options:
     --size              Only run test methods annotated by testSize (small, medium, large)
     --adb-timeout       Set maximum execution time per test in seconds (10min default)
     --fail-on-failure   Non-zero exit code on failure
+    --coverage          Code coverage flag. For Spoon to calculate coverage file your app must have the `WRITE_EXTERNAL_STORAGE` permission.
+                        (This option pulls the coverage file from all devices and merge them into a single file `merged-coverage.ec`.)
     --fail-if-no-device-connected Fail if no device is connected
     --sequential        Execute the tests device by device
+    --init-script       Path to a script that you want to run before each device
+    --grant-all         Grant all runtime permissions during installation on Marshmallow and above devices
     --e                 Arguments to pass to the Instrumentation Runner. This can be used
                         multiple times for multiple entries. Usage: --e <NAME>=<VALUE>.
                         The supported arguments varies depending on which test runner 
@@ -124,7 +149,7 @@ Declare the plugin in the `pom.xml` for the instrumentation test module.
 <plugin>
   <groupId>com.squareup.spoon</groupId>
   <artifactId>spoon-maven-plugin</artifactId>
-  <version>1.1.9</version>
+  <version>1.3.1</version>
 </plugin>
 ```
 
@@ -160,16 +185,33 @@ the `spoon-sample/` folder.
 Test Sharding
 -------------
 
-The Android Instrumention runner supports test sharding using the `numShards` and `shardIndex` arguments ([documentation](https://developer.android.com/tools/testing-support-library/index.html#ajur-sharding)).  
+The Android Instrumentation runner supports test sharding using the `numShards` and `shardIndex` arguments ([documentation](https://developer.android.com/tools/testing-support-library/index.html#ajur-sharding)).  
 
-You can use the `--e` option with Spoon to pass those arguments through to the instrumentation runner, e.g.
+If you are specifying serials for multiple devices, you may use spoon's built in auto-sharding by specifying --shard:
+
 ```
-java -jar spoon-runner-1.1.9-jar-with-dependencies.jar \
+java -jar spoon-runner-1.3.1-jar-with-dependencies.jar \
+    --apk ExampleApp-debug.apk \
+    --test-apk ExampleApp-debug-androidTest-unaligned.apk \
+    -serial emulator-1 \
+    -serial emulator-2 \
+    --shard
+```
+
+This will automatically shard across all specified serials, and merge the results. When this option is running with `--coverage` flag. It will merge all the coverage files generated from all devices into a single file called `merged-coverage.ec`.
+
+If you'd like to use a different sharding strategy, you can use the `--e` option with Spoon to pass those arguments through to the instrumentation runner, e.g.
+
+```
+java -jar spoon-runner-1.3.1-jar-with-dependencies.jar \
     --apk ExampleApp-debug.apk \
     --test-apk ExampleApp-debug-androidTest-unaligned.apk \
     --e numShards=4 \
     --e shardIndex=0
 ```
+However, it will be up to you to merge the output from the shards.
+
+
 If you use Jenkins, a good way to set up sharding is inside a "Multi-configuration project".
 
  - Add a "User-defined Axis".  Choose a name for the shard index variable, and define the index values you want (starting at zero).

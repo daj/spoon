@@ -17,9 +17,6 @@ final class HtmlLog {
       case FAIL:
         status = "failed";
         break;
-      case ERROR:
-        status = "errored";
-        break;
       default:
         throw new IllegalArgumentException("Unknown status: " + result.getStatus());
     }
@@ -64,7 +61,7 @@ final class HtmlLog {
           rowClass = "";
       }
 
-      String timestamp = message.getTime();
+      String timestamp = message.getTimestamp().toString();
       String level = message.getLogLevel().getStringValue();
       return new LogEntry(rowClass, timestamp, level, message.getTag(), message.getMessage());
     }

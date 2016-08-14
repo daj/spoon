@@ -11,28 +11,31 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.unmodifiableList;
+import static com.squareup.spoon.SpoonLogger.logError;
 
 public final class DeviceTestResult {
   /** Separator between screenshot timestamp and tag. */
   public static final String SCREENSHOT_SEPARATOR = Spoon.NAME_SEPARATOR;
 
   public enum Status {
-    PASS, FAIL, ERROR
+    PASS, FAIL
   }
 
   private final Status status;
   private final StackTrace exception;
   private final long duration;
   private final List<File> screenshots;
+  private final List<File> files;
   private final File animatedGif;
   private final List<LogCatMessage> log;
 
   private DeviceTestResult(Status status, StackTrace exception, long duration,
-      List<File> screenshots, File animatedGif, List<LogCatMessage> log) {
+      List<File> screenshots, File animatedGif, List<LogCatMessage> log, List<File> files) {
     this.status = status;
     this.exception = exception;
     this.duration = duration;
     this.screenshots = unmodifiableList(new ArrayList<File>(screenshots));
+    this.files = unmodifiableList(new ArrayList<File>(files));
     this.animatedGif = animatedGif;
     this.log = unmodifiableList(new ArrayList<LogCatMessage>(log));
   }
@@ -62,12 +65,18 @@ public final class DeviceTestResult {
     return animatedGif;
   }
 
+  /** Arbitrary files saved from the test */
+  public List<File> getFiles() {
+    return files;
+  }
+
   public List<LogCatMessage> getLog() {
     return log;
   }
 
   public static class Builder {
     private final List<File> screenshots = new ArrayList<File>();
+    private final List<File> files = new ArrayList<File>();
     private Status status = Status.PASS;
     private StackTrace exception;
     private long start;
@@ -77,16 +86,10 @@ public final class DeviceTestResult {
 
     public Builder markTestAsFailed(String message) {
       checkNotNull(message);
-      checkArgument(status == Status.PASS, "Status was already marked as " + status);
+      if (status != Status.PASS) {
+        logError("Status was already marked as failed!");
+      }
       status = Status.FAIL;
-      exception = StackTrace.from(message);
-      return this;
-    }
-
-    public Builder markTestAsError(String message) {
-      checkNotNull(message);
-      checkArgument(status == Status.PASS, "Status was already marked as " + status);
-      status = Status.ERROR;
       exception = StackTrace.from(message);
       return this;
     }
@@ -106,7 +109,9 @@ public final class DeviceTestResult {
 
     public Builder endTest() {
       checkArgument(start != 0, "Start was not called.");
-      checkArgument(duration == -1, "End was already called.");
+      if (duration != -1) {
+        logError("Test was already marked as ended!");
+      }
       duration = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - start);
       return this;
     }
@@ -114,6 +119,12 @@ public final class DeviceTestResult {
     public Builder addScreenshot(File screenshot) {
       checkNotNull(screenshot);
       screenshots.add(screenshot);
+      return this;
+    }
+
+    public Builder addFile(File file) {
+      checkNotNull(file);
+      files.add(file);
       return this;
     }
 
@@ -128,7 +139,8 @@ public final class DeviceTestResult {
       if (log == null) {
         log = Collections.emptyList();
       }
-      return new DeviceTestResult(status, exception, duration, screenshots, animatedGif, log);
+      return new DeviceTestResult(status, exception, duration,
+              screenshots, animatedGif, log, files);
     }
   }
 }
