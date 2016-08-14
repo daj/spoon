@@ -133,42 +133,11 @@ public class StackTraceTest {
     assertThat(inner.getElements()).hasSize(2);
   }
 
-  @Test public void nestedCustomException() {
-    String exception = ""
-            + "java.lang.NullPointerException: Hello to the world.\n"
-            + "at com.example.spoon.ordering.tests.MiscellaneousTest.test(MiscellaneousTest.java:11)\n"
-            + "Caused by: java.lang.AssertionError: Expected:=============\n"
-            + "=======================================\n"
-            + "\n"
-            + "<4>\n"
-            + "but was:\n"
-            + "<8>\n"
-            + "at com.example.spoon.ordering.tests.Other.otherTest(Other.java:12)\n"
-            + "at com.example.spoon.ordering.tests.Other.things(Other.java:22)";
-
-    StackTrace actual = StackTrace.from(exception);
-    assertThat(actual.getClassName()).isEqualTo("java.lang.NullPointerException");
-    assertThat(actual.getMessage()).isEqualTo("Hello to the world.");
-    assertThat(actual.getCause()).isNotNull();
-    assertThat(actual.getElements()).hasSize(1);
-
-    StackTrace inner = actual.getCause();
-    assertThat(inner.getClassName()).isEqualTo("java.lang.AssertionError");
-    assertThat(inner.getMessage()).isEqualTo("Expected:=============\n"
-            + "=======================================\n"
-            + "\n"
-            + "<4>\n"
-            + "but was:\n"
-            + "<8>");
-    assertThat(inner.getCause()).isNull();
-    assertThat(inner.getElements()).hasSize(2);
-  }
-
   /**
    * The intent of this test is to check that unexpected format stack traces don't cause any
    * parsing exceptions.
    */
-  @Test public void nestedCustomExceptionUnexpectedFormat() {
+  @Test public void unexpectedFormatException() {
     String exception = "" +
             "junit.framework.AssertionFailedError:\n";
 
